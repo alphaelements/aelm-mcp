@@ -7,6 +7,9 @@ Cargo.lock.orig
 /tmp/
 .DS_Store
 
+# MCP config (user-specific paths)
+.mcp.json
+
 # Editor
 .idea/
 .vscode/*
