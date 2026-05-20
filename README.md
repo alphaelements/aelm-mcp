@@ -43,13 +43,24 @@ Download the `aelm` binary for your platform from the
 and place it on your `PATH`.
 
 ```bash
+# Linux x86_64
+curl -LO https://github.com/alphaelements/aelm/releases/latest/download/aelm-v0.5.1-x86_64-linux.tar.gz
+tar xzf aelm-v0.5.1-x86_64-linux.tar.gz
+sudo cp aelm-v0.5.1-x86_64-linux/aelm /usr/local/bin/
+
+# macOS (Apple Silicon)
+curl -LO https://github.com/alphaelements/aelm/releases/latest/download/aelm-v0.5.1-aarch64-macos.tar.gz
+tar xzf aelm-v0.5.1-aarch64-macos.tar.gz
+sudo cp aelm-v0.5.1-aarch64-macos/aelm /usr/local/bin/
+
+# Windows x86_64 — download and extract aelm-v0.5.1-x86_64-windows.zip,
+# then add the directory containing aelm.exe to your PATH.
+```
+
+```bash
 # Verify:
 aelm --version
 ```
-
-> **Note:** The `aelm` CLI binary will be included in GitHub Releases starting
-> from v0.5.1. For v0.5.0, build from source with `cargo install --path
-> crates/aelm-cli` in the Aelm repository.
 
 ### 2. Install the MCP server
 
