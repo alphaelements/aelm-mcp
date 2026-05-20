@@ -1,0 +1,142 @@
+# Lefthook — aelm-mcp pre-commit / pre-push hooks.
+#
+# Mirrors the Aelm project's quality bar (fmt + clippy -D warnings + full
+# test + no todo/println/dead_code + no-main-commit on commit; the heavy net —
+# full test, clippy, coverage>=95%, abnormal-test quality, security audit/deny —
+# on push). aelm-mcp is a single crate, so the source-scan globs target `src/`
+# instead of the workspace's `crates/`.
+
+pre-commit:
+  parallel: false
+  commands:
+    fmt-check:
+      glob: "*.rs"
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping fmt."; exit 0; fi
+        cargo fmt --all -- --check
+      fail_text: "rustfmt check failed. Run 'cargo fmt --all' to fix."
+
+    clippy:
+      glob: "*.rs"
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping clippy."; exit 0; fi
+        cargo clippy --all-targets -- -D warnings
+      fail_text: "clippy warnings found. Fix all warnings before committing."
+
+    test:
+      glob: "*.rs"
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping tests."; exit 0; fi
+        cargo test --all
+      fail_text: "Tests failed. All tests must pass before committing."
+
+    no-todo:
+      glob: "*.rs"
+      run: |
+        if grep -rn 'todo!()' src/ 2>/dev/null || grep -rn 'unimplemented!()' src/ 2>/dev/null; then
+          echo "ERROR: todo!() or unimplemented!() found in source code."
+          exit 1
+        fi
+      fail_text: "todo!() or unimplemented!() found. Complete implementation before committing."
+
+    no-allow-dead-code:
+      glob: "*.rs"
+      run: |
+        if grep -rn '#\[allow(dead_code)\]' src/ 2>/dev/null; then
+          echo "ERROR: #[allow(dead_code)] found in source code."
+          exit 1
+        fi
+      fail_text: "#[allow(dead_code)] found. Remove dead code or complete the implementation."
+
+    no-println:
+      glob: "*.rs"
+      run: |
+        # build.rs is excluded — Cargo build scripts use `println!` for
+        # `cargo:` directives. Tests and commented lines are excluded too.
+        MATCHES=$(grep -rn 'println!' src/ --include='*.rs' 2>/dev/null | grep -v '#\[cfg(test)\]' | grep -v 'mod tests' | grep -v '// println' | grep -v '/build\.rs:' || true)
+        if [ -n "$MATCHES" ]; then
+          echo "$MATCHES" | head -20
+          echo "ERROR: println! found in non-test source code. Use log macros instead."
+          exit 1
+        fi
+      fail_text: "println! found in source code. Use log crate macros (info!, warn!, error!) instead."
+
+    no-main-commit:
+      run: |
+        BRANCH=$(git branch --show-current)
+        if [ "$BRANCH" = "main" ]; then
+          # The only sanctioned direct-to-main commit is the release bump,
+          # identified by AELM_RELEASE_COMMIT=1. Anything else is rejected.
+          if [ "${AELM_RELEASE_COMMIT:-}" = "1" ]; then
+            exit 0
+          fi
+          echo "ERROR: Direct commits to main branch are prohibited."
+          echo "Create a feature branch: git checkout -b feature/<description>"
+          exit 1
+        fi
+      fail_text: "Direct commits to main branch are prohibited."
+
+# pre-push: the heavy net. A green push here is a green merge candidate.
+pre-push:
+  parallel: false
+  commands:
+    full-test:
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping tests."; exit 0; fi
+        cargo test --all
+      fail_text: "Tests failed. All tests must pass before pushing."
+
+    full-clippy:
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping clippy."; exit 0; fi
+        cargo clippy --all-targets -- -D warnings
+      fail_text: "clippy warnings found. Fix all warnings before pushing."
+
+    fmt-check:
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping fmt."; exit 0; fi
+        cargo fmt --all -- --check
+      fail_text: "rustfmt check failed. Run 'cargo fmt --all' to fix."
+
+    coverage:
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping coverage."; exit 0; fi
+        if ! command -v cargo-llvm-cov &> /dev/null; then
+          echo "WARN: cargo-llvm-cov not installed, skipping coverage check."
+          exit 0
+        fi
+        COV_OUTPUT=$(cargo llvm-cov --all-features --ignore-filename-regex 'main\.rs' --fail-under-lines 95 2>&1)
+        COV_EXIT=$?
+        echo "$COV_OUTPUT" | tail -5
+        exit $COV_EXIT
+      fail_text: "Line coverage below 95%. Add tests before pushing."
+
+    test-quality:
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping."; exit 0; fi
+        if [ -f scripts/check-test-quality.sh ]; then
+          bash scripts/check-test-quality.sh
+        else
+          echo "No check-test-quality.sh, skipping."
+        fi
+      fail_text: "Each test module must include error/abnormal test cases."
+
+    security-audit:
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping audit."; exit 0; fi
+        if ! command -v cargo-audit &> /dev/null; then
+          echo "WARN: cargo-audit not installed, skipping CVE check."
+          exit 0
+        fi
+        cargo audit
+      fail_text: "Security vulnerabilities found in dependencies. Run 'cargo audit' for details."
+
+    security-deny:
+      run: |
+        if [ ! -f Cargo.toml ]; then echo "No Cargo.toml yet, skipping deny."; exit 0; fi
+        if ! command -v cargo-deny &> /dev/null; then
+          echo "WARN: cargo-deny not installed, skipping license/policy check."
+          exit 0
+        fi
+        cargo deny check
+      fail_text: "cargo-deny check failed. Run 'cargo deny check' for details."

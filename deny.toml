@@ -1,0 +1,56 @@
+# deny.toml — cargo-deny configuration for aelm-mcp
+# https://embarkstudios.github.io/cargo-deny/
+#
+# Run: cargo deny check
+#
+# Mirrors the Aelm project's policy. aelm-mcp is a native-only binary, so
+# the wasm32 target is dropped from the graph.
+
+[graph]
+targets = [
+    "x86_64-unknown-linux-gnu",
+]
+all-features = true
+
+# ─────────────────────────────────────────────────────────────
+# Advisories — detect known vulnerabilities (RustSec)
+# ─────────────────────────────────────────────────────────────
+[advisories]
+unmaintained = "workspace"
+ignore = []
+
+# ─────────────────────────────────────────────────────────────
+# Licenses — permissive only (MIT / Apache-2.0 per CLAUDE.md)
+# ─────────────────────────────────────────────────────────────
+[licenses]
+confidence-threshold = 0.8
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+]
+
+# ─────────────────────────────────────────────────────────────
+# Bans — control dependency usage
+# ─────────────────────────────────────────────────────────────
+[bans]
+multiple-versions = "warn"
+wildcards = "warn"
+deny = []
+skip = []
+skip-tree = []
+
+# ─────────────────────────────────────────────────────────────
+# Sources — restrict where crates can come from
+# ─────────────────────────────────────────────────────────────
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

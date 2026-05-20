@@ -1,0 +1,38 @@
+# aelm-version: 0.5.0
+part Resistor {
+    pins {
+        a: passive @1
+        b: passive @2
+    }
+    symbol: resistor
+    footprints {
+        default: "0603"
+    }
+    metadata {
+        categories: ["passive"]
+    }
+}
+
+part Capacitor {
+    pins {
+        a: passive @1
+        b: passive @2
+    }
+    symbol: capacitor
+    footprints {
+        default: "0805"
+    }
+    metadata {
+        categories: ["passive"]
+    }
+}
+
+module RcFilter {
+    instances {
+        R1: Resistor place: (0, 0)
+        C1: Capacitor place: R1(4, 0)
+    }
+    connections {
+        R1.b -> C1.a
+    }
+}

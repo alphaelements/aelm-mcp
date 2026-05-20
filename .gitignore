@@ -1,0 +1,13 @@
+/target
+**/*.rs.bk
+Cargo.lock.orig
+*.pdb
+
+# Local-only scratch
+/tmp/
+.DS_Store
+
+# Editor
+.idea/
+.vscode/*
+!.vscode/extensions.json

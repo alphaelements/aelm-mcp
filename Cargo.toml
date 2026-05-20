@@ -1,0 +1,72 @@
+# Standalone workspace — this crate is the workspace root.
+[workspace]
+
+[package]
+name = "aelm-mcp"
+version = "0.5.0"
+edition = "2021"
+rust-version = "1.78"
+description = "Model Context Protocol server for Aelm — AI-accessible circuit design via a thin CLI wrapper."
+license = "MIT"
+repository = "https://github.com/alphaelements/aelm-mcp"
+readme = "README.md"
+keywords = ["mcp", "eda", "circuit", "cad", "ai"]
+categories = ["command-line-utilities", "science"]
+
+[lib]
+name = "aelm_mcp"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aelm-mcp"
+path = "src/main.rs"
+
+[dependencies]
+rmcp = { version = "1", features = ["server", "macros", "transport-io", "schemars"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-std", "process", "io-util"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = "1"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive"] }
+# Edit tools write source to a private temp file because `aelm apply-*` reads a
+# file path (no --stdin); --dry-run keeps the file unmodified.
+tempfile = "3"
+
+[dev-dependencies]
+rmcp = { version = "1", features = ["client", "server", "macros", "transport-io", "schemars"] }
+tempfile = "3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-std", "process", "io-util"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+
+[lints.rust]
+unsafe_code = "deny"
+unused_imports = "warn"
+unused_variables = "warn"
+dead_code = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_precision_loss = "allow"
+cast_possible_wrap = "allow"
+unwrap_used = "deny"
+expect_used = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+allow_attributes_without_reason = "deny"

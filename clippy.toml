@@ -1,0 +1,6 @@
+too-many-arguments-threshold = 8
+type-complexity-threshold = 300
+allow-dbg-in-tests = true
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+doc-valid-idents = ["GridPoint", "LocalPoint", "BoundingBox", "PinDirection", "SignalFlow", "LeftToRight", "RightToLeft", "TopToBottom", "BottomToTop", "SiValue", "SiPrefix", "PascalCase", "InOut", "NoConnect", "OpenCollector", "WebView", "WASM"]
